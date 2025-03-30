@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDoS Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>DDoS Tool</h1>
+        <div class="form-container">
+            <h2>SYN Flood</h2>
+            <form id="syn-flood-form">
+                <label for="target_ip">Target IP:</label>
+                <input type="text" id="target_ip" name="target_ip" required>
+                <label for="target_port">Target Port:</label>
+                <input type="number" id="target_port" name="target_port" required>
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" name="duration" required>
+                <button type="submit">Start SYN Flood</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>UDP Flood</h2>
+            <form id="udp-flood-form">
+                <label for="target_ip">Target IP:</label>
+                <input type="text" id="target_ip" name="target_ip" required>
+                <label for="target_port">Target Port:</label>
+                <input type="number" id="target_port" name="target_port" required>
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" name="duration" required>
+                <button type="submit">Start UDP Flood</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>TCP Flood</h2>
+            <form id="tcp-flood-form">
+                <label for="target_ip">Target IP:</label>
+                <input type="text" id="target_ip" name="target_ip" required>
+                <label for="target_port">Target Port:</label>
+                <input type="number" id="target_port" name="target_port" required>
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" name="duration" required>
+                <button type="submit">Start TCP Flood</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>HTTP Flood</h2>
+            <form id="http-flood-form">
+                <label for="target_url">Target URL:</label>
+                <input type="url" id="target_url" name="target_url" required>
+                <label for="duration">Duration (seconds):</label>
+                <input type="number" id="duration" name="duration" required>
+                <button type="submit">Start HTTP Flood</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('syn-flood-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const target_ip = document.getElementById('target_ip').value;
+            const target_port = document.getElementById('target_port').value;
+            const duration = document.getElementById('duration').value;
+
+            fetch('/syn_flood', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ target_ip, target_port, duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.status);
+            });
+        });
+
+        document.getElementById('udp-flood-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const target_ip = document.getElementById('target_ip').value;
+            const target_port = document.getElementById('target_port').value;
+            const duration = document.getElementById('duration').value;
+
+            fetch('/udp_flood', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ target_ip, target_port, duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.status);
+ });
+        });
+
+        document.getElementById('tcp-flood-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const target_ip = document.getElementById('target_ip').value;
+            const target_port = document.getElementById('target_port').value;
+            const duration = document.getElementById('duration').value;
+
+            fetch('/tcp_flood', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ target_ip, target_port, duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.status);
+            });
+        });
+
+        document.getElementById('http-flood-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const target_url = document.getElementById('target_url').value;
+            const duration = document.getElementById('duration').value;
+
+            fetch('/http_flood', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ target_url, duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.status);
+            });
+        });
+    </script>
+</body>
+</html>
