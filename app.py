@@ -1,6 +1,3 @@
-#Made By Ratichubi <3
-
-
 from flask import Flask, request, jsonify, render_template
 import socket
 import threading
