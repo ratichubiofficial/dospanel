@@ -14,3 +14,4 @@ if __name__ == '__main__':
 Bind to another ip and port
 if __name__ == '__main__':
     app.run(host='192.168.1.100', port=5000)
+this tool is made for educational purposes only! please do not use that for harming
